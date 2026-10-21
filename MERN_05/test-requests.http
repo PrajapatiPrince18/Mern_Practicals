@@ -1,0 +1,40 @@
+### Practical 05: Product CRUD API Tests
+
+### 1. Welcome Health Check
+GET http://localhost:5000/
+
+### 2. Get All Products
+GET http://localhost:5000/api/products
+
+### 3. Filter by Category
+GET http://localhost:5000/api/products?category=Electronics
+
+### 4. Search Products
+GET http://localhost:5000/api/products?search=Keyboard
+
+### 5. Get Product by ID
+GET http://localhost:5000/api/products/1
+
+### 6. Create New Product
+POST http://localhost:5000/api/products
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard Pro Wireless",
+  "category": "Electronics",
+  "price": 4999,
+  "stock": 35
+}
+
+### 7. Update Product
+PUT http://localhost:5000/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard RGB v2",
+  "price": 3299,
+  "stock": 20
+}
+
+### 8. Delete Product
+DELETE http://localhost:5000/api/products/4

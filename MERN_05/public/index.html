@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Practical 05 - Express.js Routing &amp; CRUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+      color: white;
+      padding: 2.2rem 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.3rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .header-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .header-subtitle { font-size: 0.95rem; color: #c7d2fe; }
+
+    /* Main Container */
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+
+    .banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+      color: #1e40af;
+    }
+    .banner h4 { margin-bottom: 0.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b; }
+
+    /* Endpoint List */
+    .ep-item { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.7rem; background: #f8fafc; }
+    .ep-left { display: flex; align-items: center; gap: 0.6rem; font-family: monospace; font-size: 0.88rem; }
+    .method-get { background: #dbeafe; color: #1d4ed8; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .method-post { background: #dcfce7; color: #15803d; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .method-put { background: #fef3c7; color: #b45309; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .method-del { background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+
+    .btn-test { background: #4f46e5; color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn-test:hover { background: #4338ca; }
+
+    /* Console Terminal */
+    .console-box { background: #0b1329; color: #f8fafc; border-radius: 8px; padding: 1.25rem; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; min-height: 380px; overflow-y: auto; }
+    .console-header { color: #60a5fa; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .json-key { color: #93c5fd; }
+    .json-str { color: #86efac; }
+    .json-num { color: #fde047; }
+    .json-bool { color: #f472b6; }
+    .tip-box { margin-top: 1rem; border-top: 1px solid #1e293b; padding-top: 0.75rem; color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-badge">Practical No. 05</div>
+    <h1 class="header-title">Express.js Backend Server &amp; CRUD Routing</h1>
+    <p class="header-subtitle">Interactive API Playground, Route Visualizer &amp; Product CRUD Operations</p>
+  </div>
+
+  <div class="container">
+    <div class="banner">
+      <h4>💡 How to Run the Express Server</h4>
+      <p>Open command prompt inside this folder and run: <code>node server.js</code>. The server will start on port 5000. You can test endpoints below directly or through Postman / cURL!</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3 class="card-title">📡 API Route Endpoints</h3>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-get">GET</span> /api/products</div>
+          <button class="btn-test" onclick="testGetAll()">Test GET All</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-get">GET</span> /api/products/1</div>
+          <button class="btn-test" onclick="testGetOne()">Test GET by ID</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-post">POST</span> /api/products</div>
+          <button class="btn-test" onclick="testPost()">Test POST</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-put">PUT</span> /api/products/1</div>
+          <button class="btn-test" onclick="testPut()">Test PUT</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-del">DELETE</span> /api/products/2</div>
+          <button class="btn-test" style="background: #dc2626;" onclick="testDelete()">Test DELETE</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🖥️ Live JSON Response Console</h3>
+        <div class="console-box">
+          <div class="console-header">
+            <span>●</span> Live Server at localhost:5000 is running correctly.<br>
+            <span>Displaying Express.js API Response:</span>
+          </div>
+          <pre id="code-content" style="white-space: pre-wrap;">{
+  "success": true,
+  "count": 4,
+  "data": [
+    {
+      "id": 1,
+      "name": "Mechanical Keyboard RGB",
+      "category": "Electronics",
+      "price": 3499,
+      "stock": 25,
+      "inStock": true,
+      "createdAt": "2025-01-10T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Wireless Ergonomic Mouse",
+      "category": "Electronics",
+      "price": 1799,
+      "stock": 40,
+      "inStock": true
+    }
+  ]
+}</pre>
+          <div class="tip-box">
+            💡 Tip: Run 'node server.js' in terminal to start the live Node.js server!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function testGetAll() {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testGetOne() {
+      try {
+        const res = await fetch('/api/products/1');
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testPost() {
+      try {
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Gaming Headset', category: 'Audio', price: 2999, stock: 15 })
+        });
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testPut() {
+      try {
+        const res = await fetch('/api/products/1', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ price: 3299, stock: 20 })
+        });
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testDelete() {
+      try {
+        const res = await fetch('/api/products/2', { method: 'DELETE' });
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

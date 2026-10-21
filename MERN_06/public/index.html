@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Practical 06 - Student Records RESTful API</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; }
+    
+    .header {
+      background: linear-gradient(135deg, #075985 0%, #0284c7 50%, #0369a1 100%);
+      color: white;
+      padding: 2.2rem 1.5rem;
+      text-align: center;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.3rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .header-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .header-subtitle { font-size: 0.95rem; color: #bae6fd; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+
+    .banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid #0284c7;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+      color: #0369a1;
+    }
+    .banner h4 { margin-bottom: 0.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b; }
+
+    .ep-item { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.7rem; background: #f8fafc; }
+    .ep-left { display: flex; align-items: center; gap: 0.6rem; font-family: monospace; font-size: 0.88rem; }
+    .method-get { background: #dbeafe; color: #1d4ed8; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .method-post { background: #dcfce7; color: #15803d; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .method-del { background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+
+    .btn-test { background: #0284c7; color: white; border: none; padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn-test:hover { background: #0369a1; }
+
+    .console-box { background: #0b1329; color: #f8fafc; border-radius: 8px; padding: 1.25rem; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; min-height: 380px; overflow-y: auto; }
+    .console-header { color: #38bdf8; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .tip-box { margin-top: 1rem; border-top: 1px solid #1e293b; padding-top: 0.75rem; color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-badge">Practical No. 06</div>
+    <h1 class="header-title">Student Records RESTful API with Postman Testing</h1>
+    <p class="header-subtitle">REST API Endpoints, Status Codes &amp; Postman Test Collection Integration</p>
+  </div>
+
+  <div class="container">
+    <div class="banner">
+      <h4>📮 Postman Test Collection Available</h4>
+      <p>Import <code>Student_Records_API.postman_collection.json</code> in your Postman desktop client to execute the entire 11-step REST API test suite!</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3 class="card-title">📡 RESTful Endpoints</h3>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-get">GET</span> /api/students</div>
+          <button class="btn-test" onclick="testGetAll()">Test GET All</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-get">GET</span> /api/students/26084231038</div>
+          <button class="btn-test" onclick="testGetByRoll()">Test by Roll No</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-get">GET</span> /api/students/stats/overview</div>
+          <button class="btn-test" onclick="testStats()">Test Stats API</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-post">POST</span> /api/students</div>
+          <button class="btn-test" onclick="testPost()">Test POST Student</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left"><span class="method-del">DELETE</span> /api/students/21CS099</div>
+          <button class="btn-test" style="background: #dc2626;" onclick="testDelete()">Test DELETE</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🖥️ Response Output</h3>
+        <div class="console-box">
+          <div class="console-header">
+            <span>●</span> Live Server at localhost:5000 is connected.<br>
+            <span>Express REST API Response:</span>
+          </div>
+          <pre id="code-content" style="white-space: pre-wrap;">{
+  "id": 1,
+  "rollNo": "26084231038",
+  "name": "Prince Prajapati",
+  "email": "prince@college.edu",
+  "department": "Computer Engineering",
+  "semester": 6,
+  "cgpa": 8.95
+}</pre>
+          <div class="tip-box">
+            💡 Tip: Run 'node server.js' in terminal to start the live Node.js REST server!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function testGetAll() {
+      try {
+        const res = await fetch('/api/students');
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testGetByRoll() {
+      try {
+        const res = await fetch('/api/students/26084231038');
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testStats() {
+      try {
+        const res = await fetch('/api/students/stats/overview');
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testPost() {
+      try {
+        const res = await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rollNo: '22CS099', name: 'Kavya Patel', email: 'kavya@college.edu', department: 'Computer Engineering', semester: 4, cgpa: 9.45 })
+        });
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+    async function testDelete() {
+      try {
+        const res = await fetch('/api/students/4', { method: 'DELETE' });
+        const data = await res.json();
+        document.getElementById('code-content').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>
