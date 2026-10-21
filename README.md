@@ -40,7 +40,7 @@ npm install
 node server.js
 ```
 *(For `MERN_07`, update `.env` with your MongoDB Atlas connection string before running).*
-
+MONGO_URI=mongodb+srv://prince:password@cluster0.76xckkx.mongodb.net/employee_db?retryWrites=true&w=majority
 ---
 
 ## 📄 Complete Practical Documentation
