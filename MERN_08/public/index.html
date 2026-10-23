@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practical 08 - Routing, Middleware & Request Handling</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; min-height: 100vh; }
+    
+    .header {
+      background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%);
+      padding: 2.2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .header-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .header-subtitle { font-size: 1rem; color: #e0e7ff; }
+
+    .container { max-width: 1250px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+
+    .pipeline-bar {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .pipeline-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #0f172a;
+      border: 1px solid #475569;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .pipeline-arrow { color: #818cf8; font-weight: bold; }
+
+    .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #e2e8f0;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 0.75rem;
+    }
+
+    .config-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .config-item label { display: block; font-size: 0.78rem; color: #94a3b8; margin-bottom: 0.35rem; font-weight: 600; }
+    .config-item input, .config-item select {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .ep-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 0.9rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      margin-bottom: 0.65rem;
+      transition: border-color 0.2s;
+    }
+    .ep-item:hover { border-color: #6366f1; }
+    .ep-left { display: flex; align-items: center; gap: 0.6rem; font-family: monospace; font-size: 0.88rem; }
+    .badge-method {
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+    .method-get { background: #1e3a8a; color: #93c5fd; }
+    .method-post { background: #064e3b; color: #6ee7b7; }
+    .method-put { background: #78350f; color: #fde68a; }
+    .method-del { background: #7f1d1d; color: #fca5a5; }
+
+    .btn-action {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #4338ca; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+    }
+    .status-badge {
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+    .status-200 { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
+    .status-400 { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; }
+    .status-waiting { background: #334155; color: #94a3b8; }
+
+    .console-body {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 1.25rem;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.84rem;
+      min-height: 480px;
+      max-height: 600px;
+      overflow-y: auto;
+      color: #38bdf8;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <span class="header-badge">PRACTICAL NO. 08</span>
+    <h1 class="header-title">Express.js Routing, Middleware & Request Handling</h1>
+    <p class="header-subtitle">Application-level, Router-level, Built-in, Auth Middleware & Advanced Request Introspection</p>
+  </header>
+
+  <div class="container">
+    <div class="pipeline-bar">
+      <div class="pipeline-step"><span>🌐</span> Incoming Request</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>⏱️</span> Logger & Timestamp</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>📦</span> Body & Static Parsers</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>🔑</span> Auth & Role Guard</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>✅</span> Param / Body Validator</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>🚀</span> Route Controller</div>
+      <span class="pipeline-arrow">&rarr;</span>
+      <div class="pipeline-step"><span>🛡️</span> Central Error Handler</div>
+    </div>
+
+    <div class="grid">
+      <!-- Left Column: Controls & Endpoints -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚙️ Header Configuration & Route Tests</span>
+          <span style="font-size: 0.75rem; color: #818cf8;">Live Server Port: 5008</span>
+        </div>
+
+        <div class="config-box">
+          <div class="config-item">
+            <label>Header "x-api-key"</label>
+            <input type="text" id="cfgApiKey" value="prince_master_key_2026">
+          </div>
+          <div class="config-item">
+            <label>Header "x-user-role"</label>
+            <select id="cfgRole">
+              <option value="admin">admin (Full Access)</option>
+              <option value="editor">editor (Read/Write)</option>
+              <option value="viewer">viewer (Read Only)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Endpoints List -->
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-get">GET</span>
+            <span>/api/users</span>
+          </div>
+          <button class="btn-action" onclick="fetchEndpoint('GET', '/api/users')">Query All</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-get">GET</span>
+            <span>/api/users?department=Engineering</span>
+          </div>
+          <button class="btn-action" onclick="fetchEndpoint('GET', '/api/users?department=Engineering')">Query Filter</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-get">GET</span>
+            <span>/api/users/:id (e.g. ID: 1)</span>
+          </div>
+          <button class="btn-action" onclick="fetchEndpoint('GET', '/api/users/1')">Test Param</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-post">POST</span>
+            <span>/api/users (Protected)</span>
+          </div>
+          <button class="btn-action" onclick="testCreateUser()">Create Body</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-put">PUT</span>
+            <span>/api/users/:id (Protected)</span>
+          </div>
+          <button class="btn-action" onclick="testUpdateUser()">Update Record</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-del">DELETE</span>
+            <span>/api/users/:id (Admin Required)</span>
+          </div>
+          <button class="btn-action btn-danger" onclick="testDeleteUser()">Delete (Admin)</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-get">GET</span>
+            <span>/api/inspect (Full HTTP Matrix)</span>
+          </div>
+          <button class="btn-action" onclick="fetchEndpoint('GET', '/api/inspect?source=dashboard&version=v1')">Inspect HTTP</button>
+        </div>
+
+        <div class="ep-item">
+          <div class="ep-left">
+            <span class="badge-method method-get" style="background: #831843; color: #fbcfe8;">ERR</span>
+            <span>/api/simulate-error (Central Handler)</span>
+          </div>
+          <button class="btn-action btn-danger" onclick="fetchEndpoint('GET', '/api/simulate-error?type=bad-request')">Trigger 400</button>
+        </div>
+      </div>
+
+      <!-- Right Column: Response Console -->
+      <div class="card">
+        <div class="card-title">
+          <span>📟 Live Middleware & HTTP Response Console</span>
+          <span id="responseStatus" class="status-badge status-waiting">Waiting for request...</span>
+        </div>
+
+        <div class="console-header">
+          <span id="requestMeta" style="color: #94a3b8;">Click any test endpoint to inspect middleware output</span>
+          <button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="clearConsole()">Clear</button>
+        </div>
+
+        <pre id="consoleOutput" class="console-body">// Live response data will appear here...
+// Practical 08: Express.js Routing, Middleware & Request Handling</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const baseUrl = window.location.origin;
+
+    async function fetchEndpoint(method, path, body = null) {
+      const output = document.getElementById('consoleOutput');
+      const statusBadge = document.getElementById('responseStatus');
+      const meta = document.getElementById('requestMeta');
+      const apiKey = document.getElementById('cfgApiKey').value;
+      const role = document.getElementById('cfgRole').value;
+
+      output.textContent = `Connecting to ${method} ${path}...`;
+      meta.textContent = `${method} ${path}`;
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'x-user-role': role
+      };
+
+      const options = { method, headers };
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      try {
+        const startTime = Date.now();
+        const res = await fetch(baseUrl + path, options);
+        const duration = Date.now() - startTime;
+        const data = await res.json();
+
+        statusBadge.textContent = `HTTP ${res.status} (${duration}ms)`;
+        if (res.status >= 200 && res.status < 300) {
+          statusBadge.className = 'status-badge status-200';
+        } else {
+          statusBadge.className = 'status-badge status-400';
+        }
+
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        statusBadge.textContent = 'Network Error';
+        statusBadge.className = 'status-badge status-400';
+        output.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    function testCreateUser() {
+      const sample = {
+        name: "Neha Patel",
+        email: "neha.patel" + Math.floor(Math.random() * 900 + 100) + "@university.edu",
+        role: "editor",
+        department: "Engineering",
+        status: "active"
+      };
+      fetchEndpoint('POST', '/api/users', sample);
+    }
+
+    function testUpdateUser() {
+      const sample = {
+        name: "Prince Prajapati (Lead)",
+        role: "admin",
+        department: "Core Engineering",
+        status: "active"
+      };
+      fetchEndpoint('PUT', '/api/users/1', sample);
+    }
+
+    function testDeleteUser() {
+      fetchEndpoint('DELETE', '/api/users/3');
+    }
+
+    function clearConsole() {
+      document.getElementById('consoleOutput').textContent = '// Console cleared.';
+      document.getElementById('responseStatus').textContent = 'Waiting for request...';
+      document.getElementById('responseStatus').className = 'status-badge status-waiting';
+    }
+
+    // Auto-fetch health on initial page load
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchEndpoint('GET', '/api/inspect');
+    });
+  </script>
+</body>
+</html>

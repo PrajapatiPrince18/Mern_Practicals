@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Practical 13 - Industry MERN Mini Project: Document Management System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: #0b1120; color: #f8fafc; padding-bottom: 2rem; }
+    .header { background: linear-gradient(135deg, #0f766e, #0e7490, #1d4ed8); padding: 2rem; text-align: center; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: bold; }
+    .container { max-width: 1150px; margin: 1.5rem auto; padding: 0 1rem; }
+    
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-box { background: #1e293b; padding: 1.25rem; border-radius: 10px; border: 1px solid #334155; }
+    .stat-num { font-size: 1.6rem; font-weight: bold; color: #38bdf8; }
+    .stat-title { font-size: 0.8rem; color: #94a3b8; }
+
+    .main-grid { display: grid; grid-template-columns: 360px 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+    
+    .card { background: #1e293b; border-radius: 10px; padding: 1.25rem; border: 1px solid #334155; }
+    .card h3 { margin-bottom: 1rem; font-size: 1.1rem; }
+    
+    input, select { width: 100%; background: #0b1120; border: 1px solid #334155; color: white; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; font-size: 0.85rem; }
+    .btn { background: #0ea5e9; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+    .btn:hover { background: #0284c7; }
+    .btn-sm { width: auto; padding: 0.3rem 0.6rem; font-size: 0.78rem; text-decoration: none; display: inline-block; }
+    .btn-del { background: #ef4444; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: #0b1120; padding: 0.7rem; text-align: left; color: #94a3b8; border-bottom: 1px solid #334155; }
+    td { padding: 0.7rem; border-bottom: 1px solid #334155; vertical-align: middle; }
+    .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #334155; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="badge">PRACTICAL NO. 13 &bull; MINI PROJECT</span>
+    <h1 style="margin: 0.4rem 0;">Industry Document Management System (DMS)</h1>
+    <p style="color: #cbd5e1; font-size: 0.95rem;">Full-Stack Enterprise MERN Application with File Archival & Version Control</p>
+  </div>
+
+  <div class="container">
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num" id="statCount">0</div>
+        <div class="stat-title">Archived Documents</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statStorage">0.00 MB</div>
+        <div class="stat-title">Cloud Storage Used</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">Enterprise</div>
+        <div class="stat-title">Access Policy Tier</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- Upload Card -->
+      <div class="card">
+        <h3>📤 Upload & Archive Document</h3>
+        <form id="uploadForm" onsubmit="uploadDoc(event)">
+          <label style="font-size: 0.78rem; color: #94a3b8;">Document Title</label>
+          <input type="text" id="docTitle" placeholder="e.g. Master Service Agreement 2026" required>
+
+          <label style="font-size: 0.78rem; color: #94a3b8;">Department / Category</label>
+          <select id="docCat">
+            <option value="Engineering">Engineering</option>
+            <option value="Legal">Legal</option>
+            <option value="HR">HR</option>
+            <option value="Finance">Finance</option>
+          </select>
+
+          <label style="font-size: 0.78rem; color: #94a3b8;">Version</label>
+          <input type="text" id="docVer" value="v1.0" required>
+
+          <label style="font-size: 0.78rem; color: #94a3b8;">Select File (PDF, DOCX, IMG)</label>
+          <input type="file" id="docFile" required>
+
+          <button type="submit" class="btn">Archive to Cloud</button>
+        </form>
+      </div>
+
+      <!-- Explorer Card -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3>📁 Document Explorer</h3>
+          <input type="text" id="searchBox" placeholder="Search documents..." oninput="loadDocs()" style="width: 220px; margin-bottom: 0;">
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Title & Version</th>
+                <th>Category</th>
+                <th>Size</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="docsTable">
+              <tr><td colspan="4" style="text-align: center; padding: 2rem;">Loading documents...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadDocs() {
+      const q = document.getElementById('searchBox').value.trim();
+      const res = await fetch(`/api/docs?search=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      const tbody = document.getElementById('docsTable');
+
+      if (!json.data || json.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #94a3b8;">No documents found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = json.data.map(d => `
+        <tr>
+          <td>
+            <div style="font-weight: bold; color: #f8fafc;">${d.title}</div>
+            <div style="font-size: 0.75rem; color: #94a3b8;">${d.originalName} &bull; <span class="tag">${d.version}</span></div>
+          </td>
+          <td><span class="tag" style="background: #0369a1;">${d.category}</span></td>
+          <td style="color: #38bdf8;">${d.formattedSize || (d.fileSize + ' B')}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <a href="/api/docs/download/${d._id}" class="btn btn-sm" target="_blank">⬇️ Download</a>
+            <button class="btn btn-sm btn-del" onclick="deleteDoc('${d._id}')">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Refresh analytics
+      const anaRes = await fetch('/api/docs/analytics');
+      const anaJson = await anaRes.json();
+      if (anaJson.success) {
+        document.getElementById('statCount').textContent = anaJson.totalDocs;
+        document.getElementById('statStorage').textContent = anaJson.formattedStorage;
+      }
+    }
+
+    async function uploadDoc(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('docFile');
+      if (!fileInput.files[0]) return alert('Please select a file');
+
+      const formData = new FormData();
+      formData.append('title', document.getElementById('docTitle').value);
+      formData.append('category', document.getElementById('docCat').value);
+      formData.append('version', document.getElementById('docVer').value);
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const res = await fetch('/api/docs/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('uploadForm').reset();
+          document.getElementById('docVer').value = 'v1.0';
+          loadDocs();
+        } else {
+          alert(data.message);
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function deleteDoc(id) {
+      if (!confirm('Are you sure you want to delete this document?')) return;
+      await fetch(`/api/docs/${id}`, { method: 'DELETE' });
+      loadDocs();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadDocs);
+  </script>
+</body>
+</html>

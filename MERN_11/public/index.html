@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Practical 11 - Blog Management with RBAC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding-bottom: 2rem; }
+    .header { background: linear-gradient(135deg, #1e1b4b, #4338ca); padding: 2rem; text-align: center; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: bold; }
+    .container { max-width: 1000px; margin: 1.5rem auto; padding: 0 1rem; }
+    .role-bar { background: #1e293b; padding: 1rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .btn { background: #4f46e5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+    .btn-del { background: #dc2626; }
+    .card { background: #1e293b; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid #334155; }
+    input, textarea, select { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; }
+    .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+    .post-meta { font-size: 0.8rem; color: #94a3b8; }
+    .role-tag { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+    .role-admin { background: #dc2626; color: white; }
+    .role-author { background: #d97706; color: white; }
+    .role-reader { background: #2563eb; color: white; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="badge">PRACTICAL NO. 11</span>
+    <h1 style="margin: 0.5rem 0;">Blog Management with Authentication & RBAC</h1>
+    <p style="color: #c7d2fe; font-size: 0.95rem;">Role-Based Access Control: Admin, Author, and Reader with JWT Authentication</p>
+  </div>
+
+  <div class="container">
+    <div class="role-bar">
+      <div>
+        <span style="color: #94a3b8; font-size: 0.85rem;">Active Identity:</span>
+        <strong id="userName" style="color: #38bdf8;">Guest</strong>
+        <span id="userRole" class="role-tag role-reader">READER</span>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-sm" onclick="loginDemo('prince@admin.com', 'admin')">Login as Admin</button>
+        <button class="btn btn-sm" style="background: #d97706;" onclick="loginDemo('ananya@author.com', 'author')">Login as Author</button>
+        <button class="btn btn-sm" style="background: #2563eb;" onclick="loginDemo('rahul@reader.com', 'reader')">Login as Reader</button>
+      </div>
+    </div>
+
+    <!-- Create Post (Admin & Author only) -->
+    <div class="card" id="composeCard">
+      <h3 style="margin-bottom: 0.75rem;">✍️ Create New Article</h3>
+      <p id="composeNotice" style="color: #f87171; font-size: 0.85rem; margin-bottom: 0.5rem; display: none;">
+        ⚠️ Readers have read-only access. Switch to Author or Admin above to publish articles.
+      </p>
+      <input type="text" id="postTitle" placeholder="Article Title...">
+      <input type="text" id="postCategory" placeholder="Category (e.g. Tech, Career)..." value="Engineering">
+      <textarea id="postContent" rows="3" placeholder="Write article content here..."></textarea>
+      <button class="btn" id="publishBtn" onclick="createPost()">Publish Article</button>
+    </div>
+
+    <!-- Posts Feed -->
+    <h3 style="margin: 1.5rem 0 0.75rem;">📚 Published Articles Feed</h3>
+    <div id="postsList">Loading articles...</div>
+  </div>
+
+  <script>
+    let token = '';
+    let currentUser = { role: 'reader', name: 'Guest' };
+
+    async function loginDemo(email, expectedRole) {
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: 'password123' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          token = data.token;
+          currentUser = data.user;
+          updateUI();
+          loadPosts();
+        }
+      } catch (e) {
+        alert('Login failed: ' + e.message);
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('userName').textContent = currentUser.name;
+      const roleTag = document.getElementById('userRole');
+      roleTag.textContent = currentUser.role.toUpperCase();
+      roleTag.className = `role-tag role-${currentUser.role}`;
+
+      const isAllowed = currentUser.role === 'admin' || currentUser.role === 'author';
+      document.getElementById('publishBtn').disabled = !isAllowed;
+      document.getElementById('composeNotice').style.display = isAllowed ? 'none' : 'block';
+    }
+
+    async function loadPosts() {
+      const res = await fetch('/api/posts');
+      const json = await res.json();
+      const list = document.getElementById('postsList');
+
+      if (!json.data || json.data.length === 0) {
+        list.innerHTML = '<p style="color: #94a3b8;">No articles published yet.</p>';
+        return;
+      }
+
+      list.innerHTML = json.data.map(p => {
+        const canDelete = currentUser.role === 'admin' || (currentUser.role === 'author' && p.author === currentUser.id);
+        return `
+          <div class="card">
+            <div class="post-header">
+              <div>
+                <h4>${p.title}</h4>
+                <div class="post-meta">By ${p.authorName || 'Author'} &bull; Category: ${p.category} &bull; ${new Date(p.createdAt).toLocaleDateString()}</div>
+              </div>
+              ${canDelete ? `<button class="btn btn-sm btn-del" onclick="deletePost('${p._id}')">Delete</button>` : ''}
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; margin-top: 0.5rem;">${p.content}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function createPost() {
+      const title = document.getElementById('postTitle').value.trim();
+      const content = document.getElementById('postContent').value.trim();
+      const category = document.getElementById('postCategory').value.trim();
+
+      if (!title || !content) return alert('Title and content are required');
+
+      try {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ title, content, category })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('postTitle').value = '';
+          document.getElementById('postContent').value = '';
+          loadPosts();
+        } else {
+          alert(data.message);
+        }
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Are you sure you want to delete this article?')) return;
+      try {
+        const res = await fetch(`/api/posts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) loadPosts();
+        else alert(data.message);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // Default auto-login as Admin to see full experience
+    window.addEventListener('DOMContentLoaded', () => {
+      loginDemo('prince@admin.com', 'admin');
+    });
+  </script>
+</body>
+</html>

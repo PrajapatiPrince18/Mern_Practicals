@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Practical 12 - Real-Time Chat using Socket.IO</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; }
+    .header { background: linear-gradient(135deg, #0284c7, #2563eb); padding: 1.25rem; text-align: center; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: bold; }
+    
+    .chat-layout { flex: 1; display: grid; grid-template-columns: 260px 1fr; max-width: 1100px; width: 100%; margin: 1rem auto; background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; }
+    
+    .sidebar { background: #0f172a; padding: 1rem; border-right: 1px solid #334155; }
+    .room-btn { width: 100%; text-align: left; background: transparent; border: none; color: #94a3b8; padding: 0.6rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .room-btn.active, .room-btn:hover { background: #334155; color: #38bdf8; font-weight: bold; }
+
+    .chat-main { display: flex; flex-direction: column; height: 100%; }
+    .chat-header { padding: 1rem; background: #1e293b; border-bottom: 1px solid #334155; font-weight: bold; display: flex; justify-content: space-between; }
+    .messages-area { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; }
+    
+    .msg { max-width: 75%; padding: 0.6rem 0.9rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
+    .msg-incoming { background: #334155; align-self: flex-start; }
+    .msg-mine { background: #2563eb; color: white; align-self: flex-end; }
+    .msg-sender { font-size: 0.72rem; opacity: 0.75; margin-bottom: 0.2rem; }
+    .msg-system { align-self: center; font-size: 0.75rem; color: #94a3b8; font-style: italic; background: rgba(255,255,255,0.05); padding: 0.2rem 0.6rem; border-radius: 4px; }
+    
+    .typing-box { font-size: 0.75rem; color: #38bdf8; height: 1.2rem; padding: 0 1rem; }
+    
+    .input-bar { display: flex; padding: 0.75rem 1rem; background: #0f172a; border-top: 1px solid #334155; gap: 0.5rem; }
+    .input-bar input { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 0.6rem 0.9rem; border-radius: 6px; outline: none; }
+    .input-bar button { background: #2563eb; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="badge">PRACTICAL NO. 12</span>
+    <h2 style="margin-top: 0.25rem;">Real-Time Chat Application with Socket.IO</h2>
+  </div>
+
+  <div class="chat-layout">
+    <div class="sidebar">
+      <div style="margin-bottom: 1rem;">
+        <label style="font-size: 0.75rem; color: #94a3b8;">Your Display Name:</label>
+        <input type="text" id="usernameInput" value="Prince" style="width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 0.4rem; border-radius: 4px; margin-top: 0.25rem;">
+      </div>
+      <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: bold;">ROOMS</div>
+      <button class="room-btn active" onclick="switchRoom('general')"># general</button>
+      <button class="room-btn" onclick="switchRoom('mern-stack')"># mern-stack</button>
+      <button class="room-btn" onclick="switchRoom('react-dev')"># react-dev</button>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <span id="currentRoomTitle"># general</span>
+        <span style="font-size: 0.8rem; color: #10b981;">● Connected</span>
+      </div>
+
+      <div class="messages-area" id="messagesArea"></div>
+      <div class="typing-box" id="typingIndicator"></div>
+
+      <form class="input-bar" onsubmit="sendMessage(event)">
+        <input type="text" id="msgInput" placeholder="Type a message..." oninput="emitTyping()" autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentRoom = 'general';
+    let typingTimeout;
+
+    function getUsername() {
+      return document.getElementById('usernameInput').value.trim() || 'Anonymous';
+    }
+
+    function switchRoom(room) {
+      currentRoom = room;
+      document.getElementById('currentRoomTitle').textContent = '#' + room;
+      document.querySelectorAll('.room-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(room));
+      });
+      document.getElementById('messagesArea').innerHTML = '';
+      socket.emit('join_room', { username: getUsername(), room });
+    }
+
+    function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('msgInput');
+      const text = input.value.trim();
+      if (!text) return;
+      socket.emit('send_message', { username: getUsername(), room: currentRoom, text });
+      input.value = '';
+    }
+
+    function emitTyping() {
+      socket.emit('typing', { username: getUsername(), room: currentRoom });
+    }
+
+    socket.on('receive_message', (msg) => {
+      const area = document.getElementById('messagesArea');
+      const isMine = msg.sender === getUsername();
+      const div = document.createElement('div');
+      div.className = `msg ${isMine ? 'msg-mine' : 'msg-incoming'}`;
+      div.innerHTML = `<div class="msg-sender">${msg.sender} &bull; ${msg.time}</div><div>${msg.text}</div>`;
+      area.appendChild(div);
+      area.scrollTop = area.scrollHeight;
+    });
+
+    socket.on('system_message', (data) => {
+      const area = document.getElementById('messagesArea');
+      const div = document.createElement('div');
+      div.className = 'msg-system';
+      div.textContent = `${data.text} (${data.time})`;
+      area.appendChild(div);
+      area.scrollTop = area.scrollHeight;
+    });
+
+    socket.on('room_history', (history) => {
+      const area = document.getElementById('messagesArea');
+      area.innerHTML = '';
+      history.forEach(msg => {
+        const isMine = msg.sender === getUsername();
+        const div = document.createElement('div');
+        div.className = `msg ${isMine ? 'msg-mine' : 'msg-incoming'}`;
+        div.innerHTML = `<div class="msg-sender">${msg.sender} &bull; ${msg.time}</div><div>${msg.text}</div>`;
+        area.appendChild(div);
+      });
+      area.scrollTop = area.scrollHeight;
+    });
+
+    socket.on('user_typing', (user) => {
+      const indicator = document.getElementById('typingIndicator');
+      indicator.textContent = `${user} is typing...`;
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => { indicator.textContent = ''; }, 1500);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      switchRoom('general');
+    });
+  </script>
+</body>
+</html>

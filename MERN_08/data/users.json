@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "username": "prince18",
+    "name": "Prince Prajapati",
+    "email": "prince@university.edu",
+    "role": "admin",
+    "department": "Engineering",
+    "status": "active"
+  },
+  {
+    "id": 2,
+    "username": "ananya_s",
+    "name": "Ananya Sharma",
+    "email": "ananya@university.edu",
+    "role": "editor",
+    "department": "Design",
+    "status": "active"
+  },
+  {
+    "id": 3,
+    "username": "vikram_m",
+    "name": "Vikram Malhotra",
+    "email": "vikram@university.edu",
+    "role": "viewer",
+    "department": "Marketing",
+    "status": "pending"
+  },
+  {
+    "id": 4,
+    "username": "rohan_v",
+    "name": "Rohan Verma",
+    "email": "rohan@university.edu",
+    "role": "editor",
+    "department": "Engineering",
+    "status": "active"
+  }
+]

@@ -21,6 +21,12 @@ This repository contains full, standalone, and runnable source code implementati
 | **05** | Express.js Modular Routing & CRUD REST API | Node.js, Express.js, Custom Middleware | [`/MERN_05`](./MERN_05) |
 | **06** | Student Records REST API & Postman Testing | Express.js, JSON Storage, Query Filtering, Postman | [`/MERN_06`](./MERN_06) |
 | **07** | Employee Management API with MongoDB Atlas | Express.js, Mongoose ODM, MongoDB Atlas, Aggregations | [`/MERN_07`](./MERN_07) |
+| **08** | Express Routing, Middleware & Request Handling | Express.js, Application & Router Middleware, API Keys | [`/MERN_08`](./MERN_08) |
+| **09** | Multer File Upload & MongoDB Metadata Storage | Multer DiskStorage, File Type & Size Filters, Mongoose | [`/MERN_09`](./MERN_09) |
+| **10** | Complete Full-Stack MERN Inventory Application | React Client, Express Server, MongoDB Atlas, Node.js | [`/MERN_10`](./MERN_10) |
+| **11** | Blog Management System with Authentication & RBAC | JWT Auth, Bcrypt Hashing, Role-Based Access Control | [`/MERN_11`](./MERN_11) |
+| **12** | Real-Time Chat Application with Socket.IO | Socket.IO, WebSockets, Multi-room Messaging | [`/MERN_12`](./MERN_12) |
+| **13** | Mini Project: Document Management System (DMS) | Full-Stack Industry MERN Application with Archival | [`/MERN_13`](./MERN_13) |
 
 ---
 
@@ -33,14 +39,13 @@ npm install
 npm run dev
 ```
 
-### Running Backend Express / Node Practicals (05 - 07)
-Navigate into any backend directory (`MERN_05`, `MERN_06`, or `MERN_07`) and run:
+### Running Backend & Full-Stack Practicals (05 - 13)
+Navigate into any practical directory (`MERN_05` to `MERN_13`) and run:
 ```bash
 npm install
 node server.js
 ```
-*(For `MERN_07`, update `.env` with your MongoDB Atlas connection string before running).*
-MONGO_URI=mongodb+srv://prince:password@cluster0.76xckkx.mongodb.net/employee_db?retryWrites=true&w=majority
+*(For MongoDB Atlas connected projects, make sure your `.env` contains your valid Atlas connection string).*
 ---
 
 ## 📄 Complete Practical Documentation

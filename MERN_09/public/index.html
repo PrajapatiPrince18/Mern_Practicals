@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practical 09 - Multer File Upload & MongoDB Metadata</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #0b1329; color: #f8fafc; min-height: 100vh; }
+
+    .header {
+      background: linear-gradient(135deg, #065f46 0%, #047857 50%, #10b981 100%);
+      padding: 2.2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .header-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .header-subtitle { font-size: 1rem; color: #d1fae5; }
+
+    .container { max-width: 1250px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+
+    .grid { display: grid; grid-template-columns: 440px 1fr; gap: 1.5rem; }
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #151f38;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.25);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #e2e8f0;
+      border-bottom: 1px solid #223254;
+      padding-bottom: 0.75rem;
+    }
+
+    /* Upload Dropzone */
+    .dropzone {
+      border: 2px dashed #10b981;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.04);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1.25rem;
+    }
+    .dropzone:hover {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: #34d399;
+    }
+    .dropzone-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .dropzone-text { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; }
+    .dropzone-hint { font-size: 0.78rem; color: #94a3b8; margin-top: 0.3rem; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #94a3b8; margin-bottom: 0.35rem; }
+    .form-input {
+      width: 100%;
+      background: #0b1329;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: #10b981;
+      color: #042f2e;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #34d399; }
+
+    /* File Table */
+    .table-wrap { overflow-x: auto; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th { background: #0b1329; color: #94a3b8; text-align: left; padding: 0.75rem 0.9rem; font-weight: 600; border-bottom: 1px solid #334155; }
+    td { padding: 0.75rem 0.9rem; border-bottom: 1px solid #1e293b; vertical-align: middle; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+    .badge-cat {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .cat-Image { background: #1e3a8a; color: #93c5fd; }
+    .cat-Document { background: #78350f; color: #fde68a; }
+    .cat-Other { background: #334155; color: #cbd5e1; }
+
+    .btn-sm-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .btn-sm-action:hover { background: #334155; }
+    .btn-sm-del { color: #f87171; border-color: #7f1d1d; }
+    .btn-sm-del:hover { background: #7f1d1d; color: white; }
+
+    .console-box {
+      background: #060a14;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #34d399;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 1.25rem;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <span class="header-badge">PRACTICAL NO. 09</span>
+    <h1 class="header-title">Multer File Upload &amp; MongoDB Metadata Storage</h1>
+    <p class="header-subtitle">DiskStorage Engine, Multi-MIME Validation, 5MB Size Limits &amp; Cloud Document Persistence</p>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <!-- Left Column: Upload Form -->
+      <div class="card">
+        <div class="card-title">
+          <span>📤 File Upload Module</span>
+          <span style="font-size: 0.78rem; color: #34d399;">Max: 5 MB</span>
+        </div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+          <div class="dropzone" onclick="document.getElementById('fileInput').click()">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-text" id="dropzoneText">Click to Select Files</div>
+            <div class="dropzone-hint">Supported: PNG, JPG, WEBP, PDF, DOCX, TXT (Single or Batch up to 5)</div>
+            <input type="file" id="fileInput" name="files" multiple style="display: none;" onchange="handleFileSelected(event)">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Uploader Name</label>
+            <input type="text" id="uploaderName" name="uploaderName" class="form-input" value="Prince Prajapati">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">File Description / Notes</label>
+            <input type="text" id="description" name="description" class="form-input" placeholder="e.g. MERN practical lab report">
+          </div>
+
+          <button type="button" class="btn-submit" onclick="submitUpload()">Upload to Server &amp; MongoDB</button>
+        </form>
+
+        <div class="console-box" id="uploadConsole">// Upload response log will display here...</div>
+      </div>
+
+      <!-- Right Column: Stored Files from MongoDB -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚛️ Stored File Records (MongoDB Atlas)</span>
+          <button class="btn-sm-action" onclick="loadFiles()">🔄 Refresh</button>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+          <input type="text" id="searchInput" class="form-input" placeholder="Search files by name..." oninput="filterFiles()">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Original Name</th>
+                <th>Category</th>
+                <th>Size</th>
+                <th>Uploader</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="filesTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">Loading files from database...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allFiles = [];
+
+    function handleFileSelected(e) {
+      const files = e.target.files;
+      const text = document.getElementById('dropzoneText');
+      if (files.length === 1) {
+        text.textContent = `Selected: ${files[0].name} (${(files[0].size/1024).toFixed(1)} KB)`;
+      } else if (files.length > 1) {
+        text.textContent = `Selected: ${files.length} files`;
+      }
+    }
+
+    async function submitUpload() {
+      const fileInput = document.getElementById('fileInput');
+      const log = document.getElementById('uploadConsole');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose at least one file to upload!');
+        return;
+      }
+
+      const formData = new FormData();
+      const uploader = document.getElementById('uploaderName').value;
+      const desc = document.getElementById('description').value;
+
+      formData.append('uploaderName', uploader);
+      formData.append('description', desc);
+
+      let endpoint = '/api/files/upload-single';
+      if (fileInput.files.length > 1) {
+        endpoint = '/api/files/upload-multiple';
+        for (let i = 0; i < fileInput.files.length; i++) {
+          formData.append('files', fileInput.files[i]);
+        }
+      } else {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      log.textContent = `Uploading ${fileInput.files.length} file(s)...`;
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        log.textContent = JSON.stringify(data, null, 2);
+
+        if (res.ok) {
+          fileInput.value = '';
+          document.getElementById('dropzoneText').textContent = 'Click to Select Files';
+          loadFiles();
+        }
+      } catch (err) {
+        log.textContent = `Upload Error: ${err.message}`;
+      }
+    }
+
+    async function loadFiles() {
+      const tbody = document.getElementById('filesTableBody');
+      try {
+        const res = await fetch('/api/files');
+        const json = await res.json();
+        allFiles = json.data || [];
+        renderTable(allFiles);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171;">Failed to load files: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(files) {
+      const tbody = document.getElementById('filesTableBody');
+      if (!files || files.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 2.5rem;">No files uploaded yet. Upload a file on the left!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = files.map(f => `
+        <tr>
+          <td>
+            <div style="font-weight: 600; color: #f8fafc;">${f.originalName}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">${f.storedName}</div>
+          </td>
+          <td><span class="badge-cat cat-${f.category || 'Other'}">${f.category || 'Document'}</span></td>
+          <td style="color: #6ee7b7; font-weight: 600;">${f.formattedSize || (f.sizeBytes + ' B')}</td>
+          <td>${f.uploaderName || 'Prince'}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <a href="/api/files/download/${f._id}" class="btn-sm-action" target="_blank">⬇️ Download</a>
+            <button class="btn-sm-action btn-sm-del" onclick="deleteFile('${f._id}', '${f.originalName}')">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterFiles() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allFiles.filter(f => f.originalName.toLowerCase().includes(q) || (f.uploaderName && f.uploaderName.toLowerCase().includes(q)));
+      renderTable(filtered);
+    }
+
+    async function deleteFile(id, name) {
+      if (!confirm(`Delete "${name}" permanently?`)) return;
+      try {
+        const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        document.getElementById('uploadConsole').textContent = JSON.stringify(json, null, 2);
+        loadFiles();
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    }
+
+    // Auto-load on open
+    window.addEventListener('DOMContentLoaded', loadFiles);
+  </script>
+</body>
+</html>
