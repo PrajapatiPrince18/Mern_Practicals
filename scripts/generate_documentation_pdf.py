@@ -1,10 +1,8 @@
 import os
 import re
 import base64
+import html
 from playwright.sync_api import sync_playwright
-import pygments
-from pygments.lexers import JavascriptLexer, BashLexer, JsonLexer, TextLexer
-from pygments.formatters import HtmlFormatter
 
 def get_base64_image(path):
     if os.path.exists(path):
@@ -12,21 +10,9 @@ def get_base64_image(path):
             return "data:image/png;base64," + base64.b64encode(f.read()).decode("utf-8")
     return ""
 
-def highlight_code(code_text, lang):
-    lang = (lang or '').lower().strip()
-    if lang in ['js', 'jsx', 'javascript', 'node']:
-        lexer = JavascriptLexer()
-    elif lang in ['bash', 'sh', 'shell', 'cmd']:
-        lexer = BashLexer()
-    elif lang in ['json']:
-        lexer = JsonLexer()
-    else:
-        lexer = TextLexer()
-
-    formatter = HtmlFormatter(style='one-dark', noclasses=True)
-    highlighted = pygments.highlight(code_text, lexer, formatter)
-    # Wrap in IDE container
-    return f'<div class="code-editor-box">{highlighted}</div>'
+def highlight_code(code_text, lang=None):
+    escaped = html.escape(code_text.rstrip())
+    return f'<div class="code-editor-box"><pre>{escaped}</pre></div>'
 
 def build_html():
     base_dir = os.path.abspath('.')
@@ -208,29 +194,42 @@ def build_html():
     margin-bottom: 0.25rem;
   }
 
-  /* Code Editor Appearance (VS Code One Dark style) */
+  /* Code Editor Appearance (Clean Print-Friendly: White Background & Black Text) */
   .code-editor-box {
     margin: 0.4rem 0 0.8rem;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #334155;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff !important;
   }
   .code-editor-box .highlight {
-    background: #21252b !important;
-    padding: 10px 14px;
+    background: #ffffff !important;
+    padding: 0;
     margin: 0;
   }
   .code-editor-box pre {
-    background: transparent !important;
-    color: #abb2bf !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     font-family: 'JetBrains Mono', Consolas, monospace !important;
     font-size: 8pt !important;
     line-height: 1.4 !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 9px 12px !important;
     white-space: pre-wrap !important;
     word-break: break-word !important;
+  }
+  .code-editor-box pre *,
+  .code-editor-box span {
+    color: #000000 !important;
+    background: transparent !important;
+  }
+  code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
   }
 
   /* Output Section */

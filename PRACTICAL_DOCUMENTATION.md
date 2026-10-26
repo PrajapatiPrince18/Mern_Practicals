@@ -13,21 +13,21 @@
 
 ## Index of Practicals
 
-| Practical No. | Practical Title | Page No. |
+| Practical No. | Practical Title | Status |
 | :---: | :--- | :---: |
-| **01** | Build a React application using Functional Components, JSX and Component Reusability concepts. | 3 |
-| **02** | Develop a React application implementing Props, State Management and Event Handling. | 15 |
-| **03** | Create a Student Management System using React Forms, Controlled Components and Validation. | 29 |
-| **04** | Develop a Single Page Application (SPA) using React Router for navigation between multiple pages. | 46 |
-| **05** | Create a backend server using Express.js implementing routing and CRUD operation. | 63 |
-| **06** | Build RESTful APIs for Student Records Management using Express.js and Postman testing. | 75 |
-| **07** | Develop an Employee Management API integrating Express.js with MongoDB Atlas. | 86 |
-| **08** | Create a backend server using Express.js implementing routing, middleware and request handling. | 99 |
-| **09** | Create a file upload module using Multer and store file metadata in MongoDB. | 114 |
-| **10** | Develop a complete MERN application integrating React Frontend, Express Backend and MongoDB Database. | 127 |
-| **11** | Create a Blog Management System implementing CRUD Operations, Authentication and Role-Based Access Control. | 150 |
-| **12** | Develop a Real-Time Chat Application using Socket.IO, React and Node.js. | 158 |
-| **13** | Mini Project: Design and develop a full-stack industry-oriented MERN application (Document Management System). | 163 |
+| **01** | Build a React application using Functional Components, JSX and Component Reusability concepts. | Completed |
+| **02** | Develop a React application implementing Props, State Management and Event Handling. | Completed |
+| **03** | Create a Student Management System using React Forms, Controlled Components and Validation. | Completed |
+| **04** | Develop a Single Page Application (SPA) using React Router for navigation between multiple pages. | Completed |
+| **05** | Create a backend server using Express.js implementing routing and CRUD operation. | Completed |
+| **06** | Build RESTful APIs for Student Records Management using Express.js and Postman testing. | Completed |
+| **07** | Develop an Employee Management API integrating Express.js with MongoDB Atlas. | Completed |
+| **08** | Create a backend server using Express.js implementing routing, middleware and request handling. | Completed |
+| **09** | Create a file upload module using Multer and store file metadata in MongoDB. | Completed |
+| **10** | Develop a complete MERN application integrating React Frontend, Express Backend and MongoDB Database. | Completed |
+| **11** | Create a Blog Management System implementing CRUD Operations, Authentication and Role-Based Access Control. | Completed |
+| **12** | Develop a Real-Time Chat Application using Socket.IO, React and Node.js. | Completed |
+| **13** | Mini Project: Design and develop a full-stack industry-oriented MERN application (Document Management System). | Completed |
 
 ---
 

@@ -1,13 +1,14 @@
 import os
 import re
 import base64
+import html
 from playwright.sync_api import sync_playwright
 import pygments
 from pygments.lexers import JavascriptLexer, BashLexer, JsonLexer, TextLexer, HtmlLexer, CssLexer
 from pygments.formatters import HtmlFormatter
 import pymupdf
 
-BASE_DIR = os.path.abspath('.')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) if os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'MERN_01')) else os.path.abspath('.')
 
 PRACTICALS = [
     {
@@ -185,10 +186,9 @@ def get_lexer_for_file(filepath):
         return BashLexer()
     return TextLexer()
 
-def highlight_code_snippet(code_text, lexer):
-    formatter = HtmlFormatter(style='one-dark', noclasses=True)
-    highlighted = pygments.highlight(code_text, lexer, formatter)
-    return f'<div class="code-editor-box">{highlighted}</div>'
+def highlight_code_snippet(code_text, lexer=None):
+    escaped = html.escape(code_text.rstrip())
+    return f'<div class="code-editor-box"><pre>{escaped}</pre></div>'
 
 def generate_markdown_doc():
     md = """# Ganpat University
@@ -418,29 +418,42 @@ def build_html(page_map=None):
     margin-bottom: 0.2rem;
   }
 
-  /* Code Editor Appearance (VS Code One Dark style) */
+  /* Code Editor Appearance (Clean Print-Friendly: White Background & Black Text) */
   .code-editor-box {
     margin: 0.35rem 0 0.7rem;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #334155;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff !important;
   }
   .code-editor-box .highlight {
-    background: #21252b !important;
-    padding: 10px 14px;
+    background: #ffffff !important;
+    padding: 0;
     margin: 0;
   }
   .code-editor-box pre {
-    background: transparent !important;
-    color: #abb2bf !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     font-family: 'JetBrains Mono', Consolas, monospace !important;
     font-size: 7.8pt !important;
     line-height: 1.38 !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 9px 12px !important;
     white-space: pre-wrap !important;
     word-break: break-word !important;
+  }
+  .code-editor-box pre *,
+  .code-editor-box span {
+    color: #000000 !important;
+    background: transparent !important;
+  }
+  code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
   }
 
   /* Output Section */
@@ -601,6 +614,7 @@ def render_pdf(html_file, pdf_file):
         browser.close()
 
 def main():
+    os.chdir(BASE_DIR)
     print("Step 1: Generating complete PRACTICAL_DOCUMENTATION.md from codebase...")
     generate_markdown_doc()
 
